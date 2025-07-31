@@ -36,22 +36,22 @@ with st.header("1. Управление исходными данными", expa
                 json.dump(raw_data, f, ensure_ascii=False, indent=2)
             st.success(f"Исходных строк в данных: {len(raw_data)}")
 
-with cols[1]:
-    if os.path.exists(RAW_DATA_FILE):
-        raw_data = json.load(open(RAW_DATA_FILE, "r", encoding="utf-8"))
-        st.write(f"Исходных строк в данных: {len(raw_data)}")
-        edited = st.text_area(
-            "Редактируйте raw_data.json", json.dumps(raw_data, indent=2, ensure_ascii=False), height=300)
-        if st.button("Сохранить исходные данные"):
-            try:
-                new_data = json.loads(edited)
-                with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
-                    json.dump(new_data, f, ensure_ascii=False, indent=2)
-                st.success("raw_data.json обновлён!")
-            except json.JSONDecodeError:
-                st.error("Неверный формат JSON.")
-    else:
-        st.info("Исходные данные пока не загружены. Добавьте Excel-файлы слева.")
+    with cols[1]:
+        if os.path.exists(RAW_DATA_FILE):
+            raw_data = json.load(open(RAW_DATA_FILE, "r", encoding="utf-8"))
+            st.write(f"Исходных строк в данных: {len(raw_data)}")
+            edited = st.text_area(
+                "Редактируйте raw_data.json", json.dumps(raw_data, indent=2, ensure_ascii=False), height=300)
+            if st.button("Сохранить исходные данные"):
+                try:
+                    new_data = json.loads(edited)
+                    with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
+                        json.dump(new_data, f, ensure_ascii=False, indent=2)
+                    st.success("raw_data.json обновлён!")
+                except json.JSONDecodeError:
+                    st.error("Неверный формат JSON.")
+        else:
+            st.info("Исходные данные пока не загружены. Добавьте Excel-файлы слева.")
 
 # --- Анализ диапазона ---
 st.header("2. Анализ заданного диапазона")
