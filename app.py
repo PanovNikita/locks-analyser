@@ -60,6 +60,7 @@ is_skat = cols2[0].checkbox("Это СКАТ? (не учитывать посл�
 start_id = cols2[0].text_input("Начальный номер строки (например, 003181):")
 end_id = cols2[1].text_input("Конечный номер строки (например, 003200):")
 
+export_text = ""
 if st.button("Обработать диапазон"):
     if not os.path.exists(RAW_DATA_FILE):
         st.error("Сначала загрузите исходные данные!")
@@ -104,19 +105,23 @@ if st.button("Обработать диапазон"):
         with open(RESULT_FILE, "w", encoding="utf-8") as f:
             json.dump(mirror_groups, f, ensure_ascii=False, indent=2)
         st.success(f"Найдено строк в диапазоне: {len(filtered)}")
+        lines = []
         for diff, items in mirror_groups.items():
             st.subheader(f"Штамп: {diff}")
-            rows = []
+            lines.append(f"Штамп: {diff}")
             for it in items:
-                row = {"Число": it["number"], "Количество": it["count"]}
                 if "mirror" in it:
-                    row["Зеркальное число"] = it["mirror"]
-                    row["Кол-во зеркального"] = it["mirror_count"]
+                    text_line = f"{it['number']} ({it['count']}шт) ⇄ {it['mirror']} ({it['mirror_count']}шт)"
                 else:
-                    row["Зеркальное число"] = ""
-                    row["Кол-во зеркального"] = ""
-                rows.append(row)
-            st.dataframe(pd.DataFrame(rows), use_container_width=True)
+                    text_line = f"{it['number']} ({it['count']}шт)"
+                st.write(text_line)
+                lines.append(text_line)
+        export_text = "\n".join(lines)
+
+# кнопка экспорта в WhatsApp
+if export_text:
+    if st.button("Экспорт в WhatsApp"):  # при клике показываем текст для копирования
+        st.text_area("Текст для WhatsApp", export_text, height=300)
 
 # --- Просмотр результатов ---
 st.header("3. Просмотр результатов")
