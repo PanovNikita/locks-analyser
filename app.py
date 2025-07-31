@@ -7,34 +7,34 @@ import os
 RAW_DATA_FILE = "raw_data.json"  # все строки из загруженных таблиц
 RESULT_FILE = "mirror_groups.json"  # результаты обработки диапазона
 
-st.set_page_config(page_title="СКАТ-анализатор", layout="wide")
-st.title("📊 Анализ двузначных чисел из Excel")
+st.set_page_config(page_title="Подсчёт сувальд", layout="wide")
+st.title("📊 Подсчёт сувальд")
 
 # --- Управление исходными данными (raw_data) ---
-st.header("1. Управление исходными данными")
-cols = st.columns(2)
-with cols[0]:
-    uploaded_files = st.file_uploader(
-        "Загрузите новые файлы Excel для добавления к данным", 
-        type="xlsx", accept_multiple_files=True)
-    if st.button("Добавить файлы к исходным данным"):
-        raw_data = []
-        if os.path.exists(RAW_DATA_FILE):
-            with open(RAW_DATA_FILE, "r", encoding="utf-8") as f:
-                raw_data = json.load(f)
-        for file in uploaded_files:
-            df = pd.read_excel(file, dtype=str)
-            for _, row in df.iterrows():
-                id_str = row.iloc[0].strip()
-                values = [int(x.strip()) for x in row.iloc[1:7]]
-                existing = next((item for item in raw_data if item["id"] == id_str), None)
-                if existing:
-                    existing["values"] = values
-                else:
-                    raw_data.append({"id": id_str, "values": values})
-        with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(raw_data, f, ensure_ascii=False, indent=2)
-        st.success(f"Исходных строк в данных: {len(raw_data)}")
+with st.header("1. Управление исходными данными", expanded=False):
+    cols = st.columns(2)
+    with cols[0]:
+        uploaded_files = st.file_uploader(
+            "Загрузите новые файлы Excel для добавления к данным", 
+            type="xlsx", accept_multiple_files=True)
+        if st.button("Добавить файлы к исходным данным"):
+            raw_data = []
+            if os.path.exists(RAW_DATA_FILE):
+                with open(RAW_DATA_FILE, "r", encoding="utf-8") as f:
+                    raw_data = json.load(f)
+            for file in uploaded_files:
+                df = pd.read_excel(file, dtype=str)
+                for _, row in df.iterrows():
+                    id_str = row.iloc[0].strip()
+                    values = [int(x.strip()) for x in row.iloc[1:7]]
+                    existing = next((item for item in raw_data if item["id"] == id_str), None)
+                    if existing:
+                        existing["values"] = values
+                    else:
+                        raw_data.append({"id": id_str, "values": values})
+            with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
+                json.dump(raw_data, f, ensure_ascii=False, indent=2)
+            st.success(f"Исходных строк в данных: {len(raw_data)}")
 
 with cols[1]:
     if os.path.exists(RAW_DATA_FILE):
