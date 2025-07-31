@@ -118,10 +118,11 @@ if st.button("Обработать диапазон"):
                 lines.append(text_line)
         export_text = "\n".join(lines)
 
-# кнопка экспорта в WhatsApp
+# Кнопка «Скопировать» и копирование в буфер
 if export_text:
-    if st.button("Экспорт в WhatsApp"):  # при клике показываем текст для копирования
-        st.text_area("Текст для WhatsApp", export_text, height=300)
+    js = f"navigator.clipboard.writeText(`{export_text}`)"
+    st.markdown(f"<button onclick=\"{js}\">Скопировать</button>", unsafe_allow_html=True)
+    st.info("Нажмите кнопку выше, чтобы скопировать результаты в буфер обмена.")
 
 # --- Просмотр результатов ---
 st.header("3. Просмотр результатов")
