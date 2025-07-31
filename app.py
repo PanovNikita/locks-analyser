@@ -60,7 +60,6 @@ is_skat = cols2[0].checkbox("Это СКАТ? (не учитывать посл�
 start_id = cols2[0].text_input("Начальный номер строки (например, 003181):")
 end_id = cols2[1].text_input("Конечный номер строки (например, 003200):")
 
-export_text = ""
 if st.button("Обработать диапазон"):
     if not os.path.exists(RAW_DATA_FILE):
         st.error("Сначала загрузите исходные данные!")
@@ -105,24 +104,13 @@ if st.button("Обработать диапазон"):
         with open(RESULT_FILE, "w", encoding="utf-8") as f:
             json.dump(mirror_groups, f, ensure_ascii=False, indent=2)
         st.success(f"Найдено строк в диапазоне: {len(filtered)}")
-        lines = []
         for diff, items in mirror_groups.items():
             st.subheader(f"Штамп: {diff}")
-            lines.append(f"Штамп: {diff}")
             for it in items:
                 if "mirror" in it:
-                    text_line = f"{it['number']} ({it['count']}шт) ⇄ {it['mirror']} ({it['mirror_count']}шт)"
+                    st.write(f"{it['number']} ({it['count']}шт) ⇄ {it['mirror']} ({it['mirror_count']}шт)")
                 else:
-                    text_line = f"{it['number']} ({it['count']}шт)"
-                st.write(text_line)
-                lines.append(text_line)
-        export_text = "\n".join(lines)
-
-# Кнопка «Скопировать» и копирование в буфер
-if export_text:
-    js = f"navigator.clipboard.writeText(`{export_text}`)"
-    st.markdown(f"<button onclick=\"{js}\">Скопировать</button>", unsafe_allow_html=True)
-    st.info("Нажмите кнопку выше, чтобы скопировать результаты в буфер обмена.")
+                    st.write(f"{it['number']} ({it['count']}шт)")
 
 # --- Просмотр результатов ---
 st.header("3. Просмотр результатов")
@@ -130,3 +118,4 @@ if os.path.exists(RESULT_FILE):
     st.write("Результаты анализа диапазона сохранены в **mirror_groups.json**")
 else:
     st.info("Результаты ещё не сохранены. Сначала обработайте диапазон.")
+
