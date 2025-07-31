@@ -23,13 +23,12 @@ with cols[0]:
         if os.path.exists(RAW_DATA_FILE):
             with open(RAW_DATA_FILE, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
-        # Читаем новые файлы и объединяем
+        # Читаем новые файлы и обновляем/дополняем raw_data
         for file in uploaded_files:
             df = pd.read_excel(file, dtype=str)
             for _, row in df.iterrows():
                 id_str = row.iloc[0].strip()
                 values = [int(x.strip()) for x in row.iloc[1:7]]
-                # обновляем или добавляем
                 existing = next((item for item in raw_data if item["id"] == id_str), None)
                 if existing:
                     existing["values"] = values
@@ -42,17 +41,28 @@ with cols[0]:
 
 with cols[1]:
     if os.path.exists(RAW_DATA_FILE):
-        st.write(f"Исходных строк в данных: {len(json.load(open(RAW_DATA_FILE)))}")
+        raw_data = json.load(open(RAW_DATA_FILE, "r", encoding="utf-8"))
+        st.write(f"Исходных строк в данных: {len(raw_data)}")
+        if st.button("Редактировать raw_data.json"):
+            edited = st.text_area(
+                "Редактируйте raw_data.json", json.dumps(raw_data, indent=2, ensure_ascii=False), height=300)
+            if st.button("Сохранить исходные данные"):
+                try:
+                    new_data = json.loads(edited)
+                    with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
+                        json.dump(new_data, f, ensure_ascii=False, indent=2)
+                    st.success("raw_data.json обновлён!")
+                except json.JSONDecodeError:
+                    st.error("Неверный формат JSON.")
     else:
         st.info("Исходные данные пока не загружены. Добавьте Excel-файлы слева.")
 
 # --- Анализ диапазона ---
 st.header("2. Анализ заданного диапазона")
-# Параметры анализа
-diff_col1, diff_col2 = st.columns(2)
-is_skat = diff_col1.checkbox("Это СКАТ? (не учитывать последнее число в каждой строке)")
-start_id = diff_col1.text_input("Начальный номер строки (например, 003181):")
-end_id = diff_col2.text_input("Конечный номер строки (например, 003200):")
+cols2 = st.columns(2)
+is_skat = cols2[0].checkbox("Это СКАТ? (не учитывать последнее число в каждой строке)")
+start_id = cols2[0].text_input("Начальный номер строки (например, 003181):")
+end_id = cols2[1].text_input("Конечный номер строки (например, 003200):")
 
 if st.button("Обработать диапазон"):
     if not os.path.exists(RAW_DATA_FILE):
@@ -60,11 +70,9 @@ if st.button("Обработать диапазон"):
     elif not start_id or not end_id:
         st.warning("Введите начало и конец диапазона.")
     else:
-        # Загружаем raw_data
         raw_data = json.load(open(RAW_DATA_FILE, "r", encoding="utf-8"))
-        # Фильтруем по диапазону
-        filtered = [item.copy() for item in raw_data if start_id <= item["id"] <= end_id]
-        # Применяем опцию СКАТ
+        filtered = [ {"id": item["id"], "values": list(item["values"]) }
+                     for item in raw_data if start_id <= item["id"] <= end_id ]
         if is_skat:
             for item in filtered:
                 if len(item["values"]) > 1:
@@ -106,7 +114,7 @@ if st.button("Обработать диапазон"):
         st.success(f"Найдено строк в диапазоне: {len(filtered)}")
         # Вывод таблиц
         for diff, items in mirror_groups.items():
-            st.subheader(f"Группа с разностью цифр: {diff}")
+            st.subheader(f"Штамп: {diff}")
             rows = []
             for it in items:
                 row = {"Число": it["number"], "Количество": it["count"]}
@@ -119,18 +127,9 @@ if st.button("Обработать диапазон"):
                 rows.append(row)
             st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
-# --- Редактор результатов ---
-st.header("3. Редактирование результатов")
+# --- Прямая редакция результатов (необязательно) ---
+st.header("3. Просмотр результатов")
 if os.path.exists(RESULT_FILE):
-    data_json = json.load(open(RESULT_FILE, "r", encoding="utf-8"))
-    edited = st.text_area("Редактируйте mirror_groups.json", json.dumps(data_json, indent=2, ensure_ascii=False), height=300)
-    if st.button("Сохранить результаты"):
-        try:
-            new_data = json.loads(edited)
-            with open(RESULT_FILE, "w", encoding="utf-8") as f:
-                json.dump(new_data, f, ensure_ascii=False, indent=2)
-            st.success("Результаты сохранены!")
-        except json.JSONDecodeError:
-            st.error("Неверный формат JSON.")
+    st.write("Результаты анализа диапазона сохранены в file: **mirror_groups.json**")
 else:
     st.info("Результаты ещё не сохранены. Сначала обработайте диапазон.")
