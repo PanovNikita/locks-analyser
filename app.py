@@ -18,12 +18,10 @@ with cols[0]:
         "Загрузите новые файлы Excel для добавления к данным", 
         type="xlsx", accept_multiple_files=True)
     if st.button("Добавить файлы к исходным данным"):
-        # Загружаем или создаём файл raw_data.json
         raw_data = []
         if os.path.exists(RAW_DATA_FILE):
             with open(RAW_DATA_FILE, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
-        # Читаем новые файлы и обновляем/дополняем raw_data
         for file in uploaded_files:
             df = pd.read_excel(file, dtype=str)
             for _, row in df.iterrows():
@@ -34,7 +32,6 @@ with cols[0]:
                     existing["values"] = values
                 else:
                     raw_data.append({"id": id_str, "values": values})
-        # Сохраняем raw_data
         with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(raw_data, f, ensure_ascii=False, indent=2)
         st.success(f"Исходных строк в данных: {len(raw_data)}")
@@ -43,17 +40,16 @@ with cols[1]:
     if os.path.exists(RAW_DATA_FILE):
         raw_data = json.load(open(RAW_DATA_FILE, "r", encoding="utf-8"))
         st.write(f"Исходных строк в данных: {len(raw_data)}")
-        if st.button("Редактировать raw_data.json"):
-            edited = st.text_area(
-                "Редактируйте raw_data.json", json.dumps(raw_data, indent=2, ensure_ascii=False), height=300)
-            if st.button("Сохранить исходные данные"):
-                try:
-                    new_data = json.loads(edited)
-                    with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
-                        json.dump(new_data, f, ensure_ascii=False, indent=2)
-                    st.success("raw_data.json обновлён!")
-                except json.JSONDecodeError:
-                    st.error("Неверный формат JSON.")
+        edited = st.text_area(
+            "Редактируйте raw_data.json", json.dumps(raw_data, indent=2, ensure_ascii=False), height=300)
+        if st.button("Сохранить исходные данные"):
+            try:
+                new_data = json.loads(edited)
+                with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
+                    json.dump(new_data, f, ensure_ascii=False, indent=2)
+                st.success("raw_data.json обновлён!")
+            except json.JSONDecodeError:
+                st.error("Неверный формат JSON.")
     else:
         st.info("Исходные данные пока не загружены. Добавьте Excel-файлы слева.")
 
@@ -71,25 +67,22 @@ if st.button("Обработать диапазон"):
         st.warning("Введите начало и конец диапазона.")
     else:
         raw_data = json.load(open(RAW_DATA_FILE, "r", encoding="utf-8"))
-        filtered = [ {"id": item["id"], "values": list(item["values"]) }
-                     for item in raw_data if start_id <= item["id"] <= end_id ]
+        filtered = [{"id": item["id"], "values": list(item["values"])}
+                    for item in raw_data if start_id <= item["id"] <= end_id]
         if is_skat:
             for item in filtered:
                 if len(item["values"]) > 1:
                     item["values"] = item["values"][:-1]
-        # Подсчёт удвоенный
         counts = {}
         for item in filtered:
             for num in item["values"]:
                 counts[num] = counts.get(num, 0) + 1
         counts = {num: cnt * 2 for num, cnt in counts.items()}
-        # Группировка по разности цифр
         groups = {}
         for item in filtered:
             for num in item["values"]:
                 diff = abs(int(str(num)[0]) - int(str(num)[1]))
                 groups.setdefault(diff, []).append(num)
-        # Поиск зеркальных и вывод всех чисел
         mirror_groups = {}
         for diff, nums in groups.items():
             unique_nums = sorted(set(nums))
@@ -108,11 +101,9 @@ if st.button("Обработать диапазон"):
                     grp.append({"number": num, "count": cnt})
                     visited.add(num)
             mirror_groups[diff] = grp
-        # Сохраняем результат
         with open(RESULT_FILE, "w", encoding="utf-8") as f:
             json.dump(mirror_groups, f, ensure_ascii=False, indent=2)
         st.success(f"Найдено строк в диапазоне: {len(filtered)}")
-        # Вывод таблиц
         for diff, items in mirror_groups.items():
             st.subheader(f"Штамп: {diff}")
             rows = []
@@ -127,9 +118,9 @@ if st.button("Обработать диапазон"):
                 rows.append(row)
             st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
-# --- Прямая редакция результатов (необязательно) ---
+# --- Просмотр результатов ---
 st.header("3. Просмотр результатов")
 if os.path.exists(RESULT_FILE):
-    st.write("Результаты анализа диапазона сохранены в file: **mirror_groups.json**")
+    st.write("Результаты анализа диапазона сохранены в **mirror_groups.json**")
 else:
     st.info("Результаты ещё не сохранены. Сначала обработайте диапазон.")
