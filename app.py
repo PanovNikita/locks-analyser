@@ -11,7 +11,7 @@ st.set_page_config(page_title="Подсчёт сувальд", layout="wide")
 st.title("📊 Подсчёт сувальд")
 
 # --- Управление исходными данными (raw_data) ---
-with st.header("1. Управление исходными данными", expanded=False):
+with st.expander("1. Управление исходными данными", expanded=False):
     cols = st.columns(2)
     with cols[0]:
         uploaded_files = st.file_uploader(
